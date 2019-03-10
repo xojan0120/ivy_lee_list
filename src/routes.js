@@ -6,10 +6,17 @@ import NotFoundPage from './components/pages/NotFoundPage';
 import PanelLeftPage from './components/pages/PanelLeftPage';
 import PanelRightPage from './components/pages/PanelRightPage';
 
+import ILList from './components/ILList';
+import ILArchiveList from './components/ILArchiveList';
+
 export default [
   {
     path: '/',
-    component: HomePage,
+    component: ILList,
+  },
+  {
+    path: '/ILArchive',
+    component: ILArchiveList,
   },
   {
     path: '/panel-left/',
