@@ -3,6 +3,7 @@ import {
     Page,
     Navbar,
     NavLeft,
+    NavRight,
     NavTitle,
     Link,
     List,
@@ -10,33 +11,23 @@ import {
     SwipeoutActions,
     SwipeoutButton,
 } from 'framework7-react';
-import $ from 'jquery';
-import $$ from 'dom7';
 
 // --------------------------------------------------------------------------------------
 // ClassName
 // --------------------------------------------------------------------------------------
-const stockClass     = 'stock';
-const separatorClass = 'separator';
 const taskListClass  = 'task-list';
 const taskClass      = 'task';
 
 // --------------------------------------------------------------------------------------
 // Selector
 // --------------------------------------------------------------------------------------
-const taskListSelector = `.${taskListClass} li`;
-const taskSelector     = `li.${taskClass}`;
 
 // --------------------------------------------------------------------------------------
 // Other
 // --------------------------------------------------------------------------------------
-const separator = '----------';
 
 export default class ILArchiveList extends Component {
   componentDidMount = () => {
-    //$$(taskSelector).on('click', (e) => {
-    //  this.handleClickList(e);
-    //})
   }
 
   handleRestoreList = (e) => {
@@ -51,8 +42,6 @@ export default class ILArchiveList extends Component {
     e.stopPropagation();
   }
 
-  // TODO
-  // 右上にオール削除ボタン
   renderListItem = (title) => {
     return(
       <ListItem className={taskClass} title={title} name="demo-checkbox" swipeout>
@@ -69,9 +58,12 @@ export default class ILArchiveList extends Component {
       <Page>
         <Navbar>
           <NavLeft>
-            <Link iconIos="f7:menu" iconMd="material:menu" href="/"></Link>
+            <Link iconF7="list" href="/"></Link>
           </NavLeft>
           <NavTitle>Archive</NavTitle>
+          <NavRight>
+            <Link iconF7="trash"></Link>
+          </NavRight>
         </Navbar>
         <List className={taskListClass}>
           {this.renderListItem("archive1")}

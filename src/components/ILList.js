@@ -9,14 +9,11 @@ import {
     ListItem,
     SwipeoutActions,
     SwipeoutButton,
-    Swiper,
     ListInput,
-    FormInput,
-    Input,
-    Icon,
 } from 'framework7-react';
 import $ from 'jquery';
 import $$ from 'dom7';
+import ILApi from './ILApi'
 
 // --------------------------------------------------------------------------------------
 // ClassName
@@ -38,14 +35,27 @@ const taskSelector     = `li.${taskClass}`;
 const separator = '----------';
 
 export default class ILList extends Component {
+  constructor(props) {
+    console.log("constructor!");
+    super(props);
+    this.state = {
+      list: []
+    }
+  }
+
   componentDidMount = () => {
+    console.log("componentDidMount!");
+    this.updateList();
+  }
+  componentDidUpdate = () => {
+    console.log("componentDidUpdate!");
     $$(taskSelector).on('click', (e) => {
       this.handleClickList(e);
     })
   }
 
   handleClickList = (e) => {
-    console.log("click!");
+    console.log("handleClickList!");
     const li = $(e.currentTarget);
     const sep = $(`.${separatorClass}`)[0];
 
@@ -75,19 +85,25 @@ export default class ILList extends Component {
   }
 
   handleArchiveList = (e) => {
-    console.log("archive!");
+    console.log("handleArchiveList!");
     // 親要素へのイベント伝播をキャンセルする
     e.stopPropagation();
   }
 
-  renderListItem = (title) => {
-    return(
-      <ListItem className={taskClass} title={title} name="demo-checkbox" swipeout>
-        <SwipeoutActions left>
-          <SwipeoutButton delete onClick={this.handleArchiveList}>Archive</SwipeoutButton>
-        </SwipeoutActions>
-      </ListItem>
-    );
+  renderItem = (item) => {
+    if (item.id === 0 ) {
+      return (
+        <ListItem key={item.id} className={separatorClass} title={item.task} />
+      );
+    } else {
+      return (
+        <ListItem key={item.id} className={taskClass} title={item.task} swipeout>
+          <SwipeoutActions left>
+            <SwipeoutButton delete onClick={this.handleArchiveList}>Archive</SwipeoutButton>
+          </SwipeoutActions>
+        </ListItem>
+      );
+    }
   }
 
   renderSeparatorItem = () => {
@@ -98,12 +114,23 @@ export default class ILList extends Component {
     );
   }
 
+  async updateList() {
+    try {
+      const list = await (new ILApi()).fetchList();
+      this.setState({
+        list: list
+      })
+    } catch(err) {
+      console.log(err);
+    }
+  }
+
   render() {
     return(
       <Page>
         <Navbar>
           <NavRight>
-            <Link iconIos="f7:menu" iconMd="material:menu" href="/ILArchive"></Link>
+            <Link iconF7="check_round" href="/ILArchive"></Link>
           </NavRight>
           <NavTitle>Ivy Lee List</NavTitle>
         </Navbar>
@@ -113,9 +140,11 @@ export default class ILList extends Component {
         </List>
 
         <List className={taskListClass} sortable sortableEnabled onSortableSort={this.handleMoveList}>
-          {this.renderListItem("hoge1")}
-          {this.renderListItem("hoge2")}
-          {this.renderSeparatorItem()}
+          {
+            this.state.list.map((item)=>{
+              return this.renderItem(item);
+            })
+          }
         </List>
       </Page>
     );

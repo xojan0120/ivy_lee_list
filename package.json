@@ -3,6 +3,7 @@
   "version": "4.0.0",
   "private": true,
   "dependencies": {
+    "axios": "^0.18.0",
     "framework7": "^4.0.0",
     "framework7-icons": "^2.2.0",
     "framework7-react": "^4.0.0",
