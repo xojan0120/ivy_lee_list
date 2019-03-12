@@ -63,6 +63,14 @@ export default class ILList extends Component {
     })
   }
 
+  // debug用
+  show = (title,state) => {
+    console.log(title);
+    state.map((item,index) => {
+      console.log(item);
+    })
+  }
+
   componentDidUpdate = () => {
     console.log("componentDidUpdate!");
 
@@ -70,7 +78,7 @@ export default class ILList extends Component {
       this.handleClickItem(e);
     })
 
-    console.log(this.state.items);
+    this.show('show items state', this.state.items);
   }
 
   getCurrentListIndex = (itemIdAttr) => {
