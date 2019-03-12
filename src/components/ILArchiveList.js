@@ -11,12 +11,13 @@ import {
     SwipeoutActions,
     SwipeoutButton,
 } from 'framework7-react';
+import ILApi from './ILApi'
 
 // --------------------------------------------------------------------------------------
 // ClassName
 // --------------------------------------------------------------------------------------
-const taskListClass  = 'task-list';
-const taskClass      = 'task';
+const itemsClass  = 'items';
+const itemClass   = 'item';
 
 // --------------------------------------------------------------------------------------
 // Selector
@@ -27,27 +28,103 @@ const taskClass      = 'task';
 // --------------------------------------------------------------------------------------
 
 export default class ILArchiveList extends Component {
+  constructor(props) {
+    console.log("run constructor!");
+    super(props);
+
+    this.state = {
+      items: [],
+    }
+  }
+
   componentDidMount = () => {
+    console.log("componentDidMount!");
+    this.fetchAllArchivedItem();
   }
 
-  handleRestoreList = (e) => {
-    console.log("restore!");
-    // 親要素へのイベント伝播をキャンセルする
-    e.stopPropagation();
+  fetchAllArchivedItem = () => {
+    console.log('run fetchAllArchivedItem!');
+
+    let promise = (new ILApi()).fetchAllArchivedItem();
+    promise.then((result) => {
+      // -----------------------------------
+      // TODO:resultからのitems取得処理を入れる
+      // -----------------------------------
+
+      // mock data
+      const items = [
+        {id:1, title: "item1" },
+        {id:2, title: "item2" },
+      ]
+      this.setState({
+        items: items
+      })
+    })
   }
 
-  handleDeleteList = (e) => {
-    console.log("delete!");
-    // 親要素へのイベント伝播をキャンセルする
-    e.stopPropagation();
+  handleRestoreItem = (item, e) => {
+    console.log('run handleRestoreItem!');
+
+    let promise = (new ILApi()).restoreItem(item);
+    promise.then((result) => {
+      let newItems = [];
+      this.state.items.map((value,index) => {
+        if (value.id != item.id) {
+          newItems.push(value);
+        }
+      })
+      this.setState({
+        items: newItems
+      })
+    })
   }
 
-  renderListItem = (title) => {
+  handleDeleteItem = (item, e) => {
+    console.log('run handleDeleteItem!');
+
+
+    let promise = (new ILApi()).deleteItem(item);
+    promise.then((result) => {
+      let newItems = [];
+      this.state.items.map((value,index) => {
+        if (value.id != item.id) {
+          newItems.push(value);
+        }
+      })
+      this.setState({
+        items: newItems
+      })
+    })
+  }
+
+  handleDeleteAllItem = (e) => {
+    console.log('run handleDeleteAllItem!');
+    const answer = window.confirm('All delete?');
+
+    if (answer) {
+      let promise = (new ILApi()).deleteAllItem();
+      promise.then((result) => {
+        this.setState({
+          items: []
+        })
+      })
+    }
+  }
+
+  renderItem = (item) => {
     return(
-      <ListItem className={taskClass} title={title} name="demo-checkbox" swipeout>
+      <ListItem key={item.id} className={itemClass} title={item.title} name="demo-checkbox" swipeout>
         <SwipeoutActions left>
-          <SwipeoutButton delete onClick={this.handleRestoreList}>Restore</SwipeoutButton>
-          <SwipeoutButton delete onClick={this.handleDeleteList}>Delete</SwipeoutButton>
+          <SwipeoutButton
+            color="green"
+            onClick={this.handleRestoreItem.bind(this,item)}>
+            Restore
+          </SwipeoutButton>
+          <SwipeoutButton
+            color="red"
+            onClick={this.handleDeleteItem.bind(this,item)}>
+            Delete
+          </SwipeoutButton>
         </SwipeoutActions>
       </ListItem>
     );
@@ -62,12 +139,15 @@ export default class ILArchiveList extends Component {
           </NavLeft>
           <NavTitle>Archive</NavTitle>
           <NavRight>
-            <Link iconF7="trash"></Link>
+            <Link iconF7="trash" onClick={this.handleDeleteAllItem}></Link>
           </NavRight>
         </Navbar>
-        <List className={taskListClass}>
-          {this.renderListItem("archive1")}
-          {this.renderListItem("archive2")}
+        <List className={itemsClass}>
+          {
+            this.state.items.map((item, index)=>{
+              return this.renderItem(item);
+            })
+          }
         </List>
       </Page>
     );

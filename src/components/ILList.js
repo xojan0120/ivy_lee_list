@@ -11,7 +11,7 @@ import {
     SwipeoutButton,
     ListInput,
 } from 'framework7-react';
-import $ from 'jquery';
+//import $ from 'jquery';
 import $$ from 'dom7';
 import ILApi from './ILApi'
 
@@ -27,14 +27,17 @@ const itemInputClass = 'item-input';
 // --------------------------------------------------------------------------------------
 // Selector
 // --------------------------------------------------------------------------------------
-const itemsSelector  = `.${itemsClass} li`;
+const itemsSelector     = `.${itemsClass} li`;
 const itemSelector      = `li.${itemClass}`;
-const itemInputSelector = `.${itemInputClass} input`
+const itemInputSelector = `.${itemInputClass} input`;
+const separatorSelector = `.${separatorClass}`;
 
 // --------------------------------------------------------------------------------------
 // Other
 // --------------------------------------------------------------------------------------
 const separator = '----------';
+const separatorIndex = 0;
+const separatorIdAttr = `${itemClass}${separatorIndex}`;
 
 export default class ILList extends Component {
   constructor(props) {
@@ -59,6 +62,7 @@ export default class ILList extends Component {
       }
     })
   }
+
   componentDidUpdate = () => {
     console.log("componentDidUpdate!");
 
@@ -69,50 +73,45 @@ export default class ILList extends Component {
     console.log(this.state.items);
   }
 
+  getCurrentListIndex = (itemIdAttr) => {
+    return $$(itemsSelector).indexOf($$(`#${itemIdAttr}`)[0])
+  }
+
+  // this.state.itemsの順番組み換え
+  // 添字fromの要素を、添字toの後ろへ移動する
+  recombinantItems = (from, to) => {
+    // Array.sliceでディープコピーできる
+    let newItems = this.state.items.slice();
+    const val = newItems.splice(from, 1);
+    newItems.splice(to, 0, val[0]);
+    this.setState({
+      items: newItems
+    });
+  }
+
   handleClickItem = (e) => {
     console.log("handleClickItem!");
-    const li = $(e.currentTarget);
-    const sep = $(`.${separatorClass}`)[0];
+    const li = $$(e.currentTarget)[0]; // liのhtml要素
+    const target = $$(li) // liのdom7オブジェクト
 
-    if(li.hasClass(stockClass)) {
-      return;
+    if(target.hasClass(stockClass)) {
+      return false;
     } else {
-      // このshow('fast')がdom7だとできなさそうなので、
-      // ここだけjquery使用
-      li.insertAfter(sep).hide().show('fast');
-      li.addClass(stockClass);
+      target.addClass(stockClass);
+
+      const targetIdAttr    = li.id;
+      const separatorIdAttr = $$(separatorSelector)[0].id;
+
+      const from = this.getCurrentListIndex(targetIdAttr);
+      const to   = this.getCurrentListIndex(separatorIdAttr);
+
+      this.recombinantItems(from, to);
     }
   }
 
-  handleMoveItem = (e,indexes) => {
-    console.log('handleMoveItem!');
-
-    const from = indexes.from
-    const to   = indexes.to
-
-    let item = null;
-    let promise = (new ILApi()).moveItem(item, from, to);
-    promise.then((result) => {
-      // 0:item1
-      // 1:item2
-      // 2:-----
-      // -> from:1 to:0
-      // 0:item2
-      // 1:item1
-      // 2:----
-
-      // Array.sliceでディープコピーできる。
-      // let newItems = this.state.itemsでコピーすると、
-      // シャローコピーのため、newItems[to] = this.state.items[from]した時点で
-      // this.state.items[to]の値が、newItems[to]の値になってしまう。
-      let newItems   = this.state.items.slice();
-      newItems[to]   = this.state.items[from];
-      newItems[from] = this.state.items[to];
-      this.setState({
-        items: newItems
-      })
-    })
-
+  // separatorより前のitemはstockクラス除去
+  // separatorより後のitemはstockクラス付与
+  changeStockClass = () => {
     let stockFlag = false
     $$(itemsSelector).each((index,ele) => {
       if($$(ele).hasClass(separatorClass)) {
@@ -127,10 +126,18 @@ export default class ILList extends Component {
     })
   }
 
-  handleArchiveList = (e) => {
-    console.log("handleArchiveList!");
-    // 親要素へのイベント伝播をキャンセルする
-    e.stopPropagation();
+  handleMoveItem = (e,indexes) => {
+    console.log('handleMoveItem!');
+
+    const from = indexes.from
+    const to   = indexes.to
+
+    let item = null;
+    let promise = (new ILApi()).moveItem(item, from, to);
+    promise.then((result) => {
+      this.recombinantItems(from, to);
+      this.changeStockClass();
+    })
   }
 
   fetchAllItem = () => {
@@ -146,7 +153,7 @@ export default class ILList extends Component {
       const items = [
         {id:1, title: "item1" },
         {id:2, title: "item2" },
-        {id:0, title: "-----" },
+        {id:separatorIndex, title: "-----" },
       ]
       this.setState({
         items: items
@@ -154,13 +161,15 @@ export default class ILList extends Component {
     })
   }
 
+
   handleAddItem = (item) => {
     console.log('run handleAddItem!');
 
     let promise = (new ILApi()).addItem(item);
     promise.then((result) => {
-      // mock data
-      item.id = 999;
+      // mock id
+      item.id = this.state.items.length
+
       let newItems = this.state.items.slice();
       newItems.unshift(item);
       this.setState({
@@ -169,11 +178,7 @@ export default class ILList extends Component {
     })
   }
 
-  handleDeleteItem = () => {
-    console.log('run handleDeleteItem!');
-  }
-
-  handleArchiveItem = (item,e) => {
+  handleArchiveItem = (item, e) => {
     console.log('run handleArchiveItem!');
 
     let promise = (new ILApi()).archiveItem(item);
@@ -191,13 +196,14 @@ export default class ILList extends Component {
   }
 
   renderItem = (item) => {
-    if (item.id === 0 ) {
+    if (item.id === separatorIndex ) {
       return (
-        <ListItem key={item.id} className={separatorClass} title={item.title} />
+        <ListItem key={item.id} id={separatorIdAttr} className={separatorClass} title={item.title} />
       );
     } else {
+      const itemIdAttr = `${itemClass}${item.id}`
       return (
-        <ListItem key={item.id} className={itemClass} title={item.title} swipeout>
+        <ListItem key={item.id} id={itemIdAttr} className={itemClass} title={item.title} swipeout>
           <SwipeoutActions left>
             <SwipeoutButton 
               color="green"
