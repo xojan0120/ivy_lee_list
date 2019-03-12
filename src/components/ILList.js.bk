@@ -20,16 +20,16 @@ import ILApi from './ILApi'
 // --------------------------------------------------------------------------------------
 const stockClass     = 'stock';
 const separatorClass = 'separator';
-const itemsClass     = 'items';
-const itemClass      = 'item';
-const itemInputClass = 'item-input';
+const taskListClass  = 'task-list';
+const taskClass      = 'task';
+const taskInputClass = 'task-input';
 
 // --------------------------------------------------------------------------------------
 // Selector
 // --------------------------------------------------------------------------------------
-const itemsSelector  = `.${itemsClass} li`;
-const itemSelector      = `li.${itemClass}`;
-const itemInputSelector = `.${itemInputClass} input`
+const taskListSelector  = `.${taskListClass} li`;
+const taskSelector      = `li.${taskClass}`;
+const taskInputSelector = `.${taskInputClass} input`
 
 // --------------------------------------------------------------------------------------
 // Other
@@ -42,18 +42,24 @@ export default class ILList extends Component {
     super(props);
 
     this.state = {
-      items: [],
+      vlData: { items: [] }
     }
+  }
+
+  renderExternal(vl, vlData) {
+    console.log('run renderExternal!');
+    console.log(vlData);
+    this.setState({ vlData });
   }
 
   componentDidMount = () => {
     console.log("componentDidMount!");
     this.fetchAllItem();
 
-    $$(itemInputSelector).on('keydown', (e) => {
+    $$(taskInputSelector).on('keydown', (e) => {
       if (e.keyCode === 13 && e.target.value != '') {
-        const item = { id: null, title: e.target.value };
-        this.handleAddItem(item);
+        const item = { id: null, task: e.target.value };
+        this.addItem(item);
         e.target.value = '';
         e.target.blur();
       }
@@ -62,15 +68,13 @@ export default class ILList extends Component {
   componentDidUpdate = () => {
     console.log("componentDidUpdate!");
 
-    $$(itemSelector).on('click', (e) => {
-      this.handleClickItem(e);
+    $$(taskSelector).on('click', (e) => {
+      this.handleClickList(e);
     })
-
-    console.log(this.state.items);
   }
 
-  handleClickItem = (e) => {
-    console.log("handleClickItem!");
+  handleClickList = (e) => {
+    console.log("handleClickList!");
     const li = $(e.currentTarget);
     const sep = $(`.${separatorClass}`)[0];
 
@@ -84,37 +88,18 @@ export default class ILList extends Component {
     }
   }
 
-  handleMoveItem = (e,indexes) => {
-    console.log('handleMoveItem!');
-
-    const from = indexes.from
-    const to   = indexes.to
+  handleMoveList = (e,indexes) => {
+    console.log('handleMoveList!');
 
     let item = null;
-    let promise = (new ILApi()).moveItem(item, from, to);
+    let promise = (new ILApi()).moveItem(item, indexes.from, indexes.to);
     promise.then((result) => {
-      // 0:item1
-      // 1:item2
-      // 2:-----
-      // -> from:1 to:0
-      // 0:item2
-      // 1:item1
-      // 2:----
-
-      // Array.sliceでディープコピーできる。
-      // let newItems = this.state.itemsでコピーすると、
-      // シャローコピーのため、newItems[to] = this.state.items[from]した時点で
-      // this.state.items[to]の値が、newItems[to]の値になってしまう。
-      let newItems   = this.state.items.slice();
-      newItems[to]   = this.state.items[from];
-      newItems[from] = this.state.items[to];
-      this.setState({
-        items: newItems
-      })
+      let newItems = this.getVirtualList().items;
+      newItems.unshift(item)
     })
 
     let stockFlag = false
-    $$(itemsSelector).each((index,ele) => {
+    $$(taskListSelector).each((index,ele) => {
       if($$(ele).hasClass(separatorClass)) {
         stockFlag = true
       } else {
@@ -133,6 +118,26 @@ export default class ILList extends Component {
     e.stopPropagation();
   }
 
+  renderItem = (item) => {
+    if (item.id === 0 ) {
+      return (
+        <ListItem key={item.id} className={separatorClass} title={item.task} />
+      );
+    } else {
+      return (
+        <ListItem key={item.id} className={taskClass} title={item.task} swipeout>
+          <SwipeoutActions left>
+            <SwipeoutButton delete onClick={this.handleArchiveList}>Archive</SwipeoutButton>
+          </SwipeoutActions>
+        </ListItem>
+      );
+    }
+  }
+
+  getVirtualList = () => {
+    return $$(".virtual-list")[0].f7VirtualList
+  }
+  
   fetchAllItem = () => {
     console.log('run fetchAllItem!');
 
@@ -144,71 +149,39 @@ export default class ILList extends Component {
 
       // mock data
       const items = [
-        {id:1, title: "item1" },
-        {id:2, title: "item2" },
-        {id:0, title: "-----" },
+        {id:1, task: "task1" },
+        {id:2, task: "task2" },
+        {id:0, task: "-----" },
       ]
+      let newItems = this.getVirtualList().items;
+      items.map((item,index) => {
+        newItems.push(item)
+      })
       this.setState({
-        items: items
+        vlData: { items: newItems }
       })
     })
   }
 
-  handleAddItem = (item) => {
-    console.log('run handleAddItem!');
+  addItem = (item) => {
+    console.log('run addItem!');
 
     let promise = (new ILApi()).addItem(item);
     promise.then((result) => {
       // mock data
       item.id = 999;
-      let newItems = this.state.items.slice();
-      newItems.unshift(item);
-      this.setState({
-        items: newItems
-      })
+      console.log(this.getVirtualList().items);
+      this.getVirtualList().appendItem(item)
     })
   }
 
-  handleDeleteItem = () => {
-    console.log('run handleDeleteItem!');
+  deleteItem = () => {
   }
 
-  handleArchiveItem = (item,e) => {
-    console.log('run handleArchiveItem!');
-
-    let promise = (new ILApi()).archiveItem(item);
-    promise.then((result) => {
-      let newItems = [];
-      this.state.items.map((value,index) => {
-        if (value.id != item.id) {
-          newItems.push(value);
-        }
-      })
-      this.setState({
-        items: newItems
-      })
-    })
+  moveItem = () => {
   }
 
-  renderItem = (item) => {
-    if (item.id === 0 ) {
-      return (
-        <ListItem key={item.id} className={separatorClass} title={item.title} />
-      );
-    } else {
-      return (
-        <ListItem key={item.id} className={itemClass} title={item.title} swipeout>
-          <SwipeoutActions left>
-            <SwipeoutButton 
-              color="green"
-              onClick={this.handleArchiveItem.bind(this,item)}
-            >
-              Archive
-            </SwipeoutButton>
-          </SwipeoutActions>
-        </ListItem>
-      );
-    }
+  archiveItem = () => {
   }
 
   render() {
@@ -224,20 +197,25 @@ export default class ILList extends Component {
 
         <List>
           <ListInput 
-            className={itemInputClass}
+            className={taskInputClass}
             type="text" 
             placeholder="タスクを入力..." 
             clearButton />
         </List>
 
         <List 
-          className={itemsClass} 
+          className={taskListClass} 
           sortable 
           sortableEnabled 
-          onSortableSort={this.handleMoveItem}
+          onSortableSort={this.handleMoveList}
+          virtualList
+          virtualListParams={{
+            items: [],
+            renderExternal: this.renderExternal.bind(this)
+          }}
         >
           {
-            this.state.items.map((item, index)=>{
+            this.state.vlData.items.map((item, index)=>{
               return this.renderItem(item);
             })
           }

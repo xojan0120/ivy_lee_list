@@ -8,15 +8,22 @@
 import NotFoundPage from './components/pages/NotFoundPage';
 import ILList from './components/ILList';
 import ILArchiveList from './components/ILArchiveList';
+import Vltest from './components/Vltest';
 
 export default [
   {
     path: '/',
     component: ILList,
+    //component: Vltest,
   },
   {
     path: '/ILArchive',
     component: ILArchiveList,
+  },
+  {
+    // VirtualList理解用
+    path: '/Vltest',
+    component: Vltest,
   },
   {
     path: '(.*)',
