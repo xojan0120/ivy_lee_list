@@ -1,35 +1,51 @@
+// ----------------------------------------------------------------------------------------
+// Import(Standard)
+// ----------------------------------------------------------------------------------------
 import React, { Component } from 'react';
+
+// ----------------------------------------------------------------------------------------
+// Import(Framework7)
+// ----------------------------------------------------------------------------------------
 import {
-    Page,
-    Navbar,
-    NavLeft,
-    NavRight,
-    NavTitle,
     Link,
     List,
     ListItem,
+    NavLeft,
+    NavRight,
+    NavTitle,
+    Navbar,
+    Page,
     SwipeoutActions,
     SwipeoutButton,
 } from 'framework7-react';
+import $$ from 'dom7';
+
+// ----------------------------------------------------------------------------------------
+// Import(Self made)
+// ----------------------------------------------------------------------------------------
 import ILApi from './ILApi'
 
-// --------------------------------------------------------------------------------------
-// ClassName
-// --------------------------------------------------------------------------------------
-const itemsClass  = 'items';
-const itemClass   = 'item';
+// ----------------------------------------------------------------------------------------
+// CSS ClassName
+// ----------------------------------------------------------------------------------------
+const itemClass   = 'archive-item';
+const itemsClass  = 'archive-items';
 
-// --------------------------------------------------------------------------------------
-// Selector
-// --------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------
+// CSS Selector
+// ----------------------------------------------------------------------------------------
+const itemsSelector = `.${itemsClass} li`;
 
-// --------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------
 // Other
-// --------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------
 
+// ----------------------------------------------------------------------------------------
+// Main Class
+// ----------------------------------------------------------------------------------------
 export default class ILArchiveList extends Component {
   constructor(props) {
-    console.log("run constructor!");
+    console.log('run constructor!');
     super(props);
 
     this.state = {
@@ -38,82 +54,94 @@ export default class ILArchiveList extends Component {
   }
 
   componentDidMount = () => {
-    console.log("componentDidMount!");
+    console.log('run componentDidMount!');
     this.fetchAllArchivedItem();
+  }
+
+  componentWillUnmount = () => {
+    console.log('run componentWillUnmount!');
+  }
+
+  failureCallBack = (e) => {
+    alert(e);
   }
 
   fetchAllArchivedItem = () => {
     console.log('run fetchAllArchivedItem!');
 
     let promise = (new ILApi()).fetchAllArchivedItem();
-    promise.then((result) => {
-      // -----------------------------------
-      // TODO:resultからのitems取得処理を入れる
-      // -----------------------------------
-
-      // mock data
-      const items = [
-        {id:1, title: "item1" },
-        {id:2, title: "item2" },
-      ]
-      this.setState({
-        items: items
-      })
-    })
+    promise.then(
+      (result) => {
+        const items = result.data.data;
+        this.setState({ items: items })
+      },
+      this.failureCallBack
+    )
   }
 
   handleRestoreItem = (item, e) => {
     console.log('run handleRestoreItem!');
 
-    let promise = (new ILApi()).restoreItem(item);
-    promise.then((result) => {
-      let newItems = [];
-      this.state.items.map((value,index) => {
-        if (value.id != item.id) {
-          newItems.push(value);
-        }
-      })
-      this.setState({
-        items: newItems
-      })
-    })
+    let promise = (new ILApi()).restoreItem(item.id);
+    promise.then(
+      (result) => {
+        let newItems = [];
+        this.state.items.map((value,index) => {
+          if (value.id !== item.id) {
+            newItems.push(value);
+          }
+          return true;
+        })
+        this.setState({ items: newItems })
+      },
+      this.failureCallBack
+    )
   }
 
   handleDeleteItem = (item, e) => {
     console.log('run handleDeleteItem!');
 
-
-    let promise = (new ILApi()).deleteItem(item);
-    promise.then((result) => {
-      let newItems = [];
-      this.state.items.map((value,index) => {
-        if (value.id != item.id) {
-          newItems.push(value);
-        }
-      })
-      this.setState({
-        items: newItems
-      })
-    })
+    let promise = (new ILApi()).deleteItem(item.id);
+    promise.then(
+      (result) => {
+        let newItems = [];
+        this.state.items.map((value,index) => {
+          if (value.id !== item.id) {
+            newItems.push(value);
+          }
+          return true;
+        })
+        this.setState({ items: newItems })
+      },
+      this.failureCallBack
+    )
   }
 
-  handleDeleteAllItem = (e) => {
-    console.log('run handleDeleteAllItem!');
-    const answer = window.confirm('All delete?');
+  handleDeleteAllArchivedItem = (e) => {
+    console.log('run handleDeleteAllArchivedItem!');
 
-    if (answer) {
-      let promise = (new ILApi()).deleteAllItem();
-      promise.then((result) => {
-        this.setState({
-          items: []
-        })
-      })
+    if ($$(itemsSelector).length > 0) {
+      const answer = window.confirm('Delete all?');
+      if (answer) {
+        let promise = (new ILApi()).deleteAllArchivedItem();
+        promise.then(
+          (result) => {
+            this.setState({ items: [] })
+          },
+          this.failureCallBack
+        )
+      }
     }
   }
 
   renderItem = (item) => {
     return(
-      <ListItem key={item.id} className={itemClass} title={item.title} name="demo-checkbox" swipeout>
+      <ListItem
+        key={item.id}
+        className={itemClass}
+        title={item.title}
+        swipeout
+      >
         <SwipeoutActions left>
           <SwipeoutButton
             color="green"
@@ -139,14 +167,14 @@ export default class ILArchiveList extends Component {
           </NavLeft>
           <NavTitle>Archive</NavTitle>
           <NavRight>
-            <Link iconF7="trash" onClick={this.handleDeleteAllItem}></Link>
+            <Link iconF7="trash" onClick={this.handleDeleteAllArchivedItem}></Link>
           </NavRight>
         </Navbar>
         <List className={itemsClass}>
           {
-            this.state.items.map((item, index)=>{
-              return this.renderItem(item);
-            })
+            this.state.items.map(
+              (item, index)=>{ return this.renderItem(item) }
+            )
           }
         </List>
       </Page>

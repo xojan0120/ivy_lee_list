@@ -1,47 +1,59 @@
+// ----------------------------------------------------------------------------------------
+// Import(Standard)
+// ----------------------------------------------------------------------------------------
 import React, { Component } from 'react';
+
+// ----------------------------------------------------------------------------------------
+// Import(Framework7)
+// ----------------------------------------------------------------------------------------
 import {
-    Page,
-    Navbar,
-    NavRight,
-    NavTitle,
     Link,
     List,
+    ListInput,
     ListItem,
+    NavRight,
+    NavTitle,
+    Navbar,
+    Page,
     SwipeoutActions,
     SwipeoutButton,
-    ListInput,
 } from 'framework7-react';
-//import $ from 'jquery';
 import $$ from 'dom7';
+
+// ----------------------------------------------------------------------------------------
+// Import(Self made)
+// ----------------------------------------------------------------------------------------
 import ILApi from './ILApi'
 
-// --------------------------------------------------------------------------------------
-// ClassName
-// --------------------------------------------------------------------------------------
-const stockClass     = 'stock';
-const separatorClass = 'separator';
-const itemsClass     = 'items';
+// ----------------------------------------------------------------------------------------
+// CSS ClassName
+// ----------------------------------------------------------------------------------------
 const itemClass      = 'item';
 const itemInputClass = 'item-input';
+const itemsClass     = 'items';
+const separatorClass = 'separator';
+const stockClass     = 'stock';
 
-// --------------------------------------------------------------------------------------
-// Selector
-// --------------------------------------------------------------------------------------
-const itemsSelector     = `.${itemsClass} li`;
-const itemSelector      = `li.${itemClass}`;
+// ----------------------------------------------------------------------------------------
+// CSS Selector
+// ----------------------------------------------------------------------------------------
 const itemInputSelector = `.${itemInputClass} input`;
+const itemSelector      = `li.${itemClass}`;
+const itemsSelector     = `.${itemsClass} li`;
 const separatorSelector = `.${separatorClass}`;
 
-// --------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------
 // Other
-// --------------------------------------------------------------------------------------
-const separator = '----------';
-const separatorIndex = 0;
+// ----------------------------------------------------------------------------------------
+const separatorIndex  = 1; // DB上のidと同値にする
 const separatorIdAttr = `${itemClass}${separatorIndex}`;
 
+// ----------------------------------------------------------------------------------------
+// Main Class
+// ----------------------------------------------------------------------------------------
 export default class ILList extends Component {
   constructor(props) {
-    console.log("run constructor!");
+    console.log('run constructor!');
     super(props);
 
     this.state = {
@@ -50,17 +62,29 @@ export default class ILList extends Component {
   }
 
   componentDidMount = () => {
-    console.log("componentDidMount!");
+    console.log('run componentDidMount!');
     this.fetchAllItem();
 
     $$(itemInputSelector).on('keydown', (e) => {
-      if (e.keyCode === 13 && e.target.value != '') {
-        const item = { id: null, title: e.target.value };
-        this.handleAddItem(item);
-        e.target.value = '';
-        e.target.blur();
-      }
+      this.handleInputItem(e);
     })
+  }
+
+  componentDidUpdate = () => {
+    console.log('run componentDidUpdate!');
+
+    // itemSelectorはseparatorを含まない
+    $$(itemSelector).on('click', (e) => {
+      this.handleClickItem(e);
+    })
+
+    this.changeStockClass();
+
+    this.show('show items state', this.state.items);
+  }
+
+  componentWillUnmount = () => {
+    console.log('run componentWillUnmount!');
   }
 
   // debug用
@@ -68,19 +92,25 @@ export default class ILList extends Component {
     console.log(title);
     state.map((item,index) => {
       console.log(item);
+      return true;
     })
+    return true;
   }
 
-  componentDidUpdate = () => {
-    console.log("componentDidUpdate!");
-
-    $$(itemSelector).on('click', (e) => {
-      this.handleClickItem(e);
-    })
-
-    this.show('show items state', this.state.items);
+  failureCallBack = (e) => {
+    alert(e);
   }
 
+  handleInputItem = (e) => {
+    if (e.keyCode === 13 && e.target.value !== '') {
+      const title = e.target.value;
+      this.handleAddItem(title);
+      e.target.value = '';
+      e.target.blur();
+    }
+  }
+
+  // 要素のID属性からリストの何番目にあるか算出
   getCurrentListIndex = (itemIdAttr) => {
     return $$(itemsSelector).indexOf($$(`#${itemIdAttr}`)[0])
   }
@@ -98,13 +128,15 @@ export default class ILList extends Component {
   }
 
   handleClickItem = (e) => {
-    console.log("handleClickItem!");
+    console.log('run handleClickItem!');
     const li = $$(e.currentTarget)[0]; // liのhtml要素
     const target = $$(li) // liのdom7オブジェクト
 
     if(target.hasClass(stockClass)) {
+      console.log('  stock');
       return false;
     } else {
+      console.log('  not stock');
       target.addClass(stockClass);
 
       const targetIdAttr    = li.id;
@@ -113,13 +145,20 @@ export default class ILList extends Component {
       const from = this.getCurrentListIndex(targetIdAttr);
       const to   = this.getCurrentListIndex(separatorIdAttr);
 
-      this.recombinantItems(from, to);
+      const itemId = this.getItemId(from);
+      let promise = (new ILApi()).moveItem(itemId, from, to);
+      promise.then(
+        (result) => { this.recombinantItems(from, to) },
+        this.failureCallBack
+      )
     }
   }
 
   // separatorより前のitemはstockクラス除去
   // separatorより後のitemはstockクラス付与
   changeStockClass = () => {
+    console.log('run changeStockClass!');
+
     let stockFlag = false
     $$(itemsSelector).each((index,ele) => {
       if($$(ele).hasClass(separatorClass)) {
@@ -134,84 +173,94 @@ export default class ILList extends Component {
     })
   }
 
+  // リストの順番から、itemのidを取得
+  getItemId = (listIndex) => {
+    return $$(itemsSelector)[listIndex].id.replace(itemClass,'')
+  }
+
   handleMoveItem = (e,indexes) => {
-    console.log('handleMoveItem!');
+    console.log('run handleMoveItem!');
 
-    const from = indexes.from
-    const to   = indexes.to
+    const from = indexes.from;
+    const to   = indexes.to;
 
-    let item = null;
-    let promise = (new ILApi()).moveItem(item, from, to);
-    promise.then((result) => {
-      this.recombinantItems(from, to);
-      this.changeStockClass();
-    })
+    const itemId = this.getItemId(to);
+    let promise = (new ILApi()).moveItem(itemId, from, to);
+    promise.then(
+      (result) => { this.recombinantItems(from, to) },
+      this.failureCallBack
+    )
   }
 
   fetchAllItem = () => {
     console.log('run fetchAllItem!');
 
     let promise = (new ILApi()).fetchAllItem();
-    promise.then((result) => {
-      // -----------------------------------
-      // TODO:resultからのitems取得処理を入れる
-      // -----------------------------------
-
-      // mock data
-      const items = [
-        {id:1, title: "item1" },
-        {id:2, title: "item2" },
-        {id:separatorIndex, title: "-----" },
-      ]
-      this.setState({
-        items: items
-      })
-    })
+    promise.then(
+      (result) => {
+        const items = result.data.data;
+        this.setState({ items: items })
+      },
+      this.failureCallBack
+    )
   }
 
-
-  handleAddItem = (item) => {
+  handleAddItem = (title) => {
     console.log('run handleAddItem!');
 
-    let promise = (new ILApi()).addItem(item);
-    promise.then((result) => {
-      // mock id
-      item.id = this.state.items.length
-
-      let newItems = this.state.items.slice();
-      newItems.unshift(item);
-      this.setState({
-        items: newItems
-      })
-    })
+    let promise = (new ILApi()).addItem(title);
+    promise.then(
+      (result) => {
+        const newItem = result.data.data;
+        let newItems = this.state.items.slice();
+        newItems.unshift(newItem);
+        this.setState({ items: newItems })
+      },
+      this.failureCallBack)
   }
 
   handleArchiveItem = (item, e) => {
     console.log('run handleArchiveItem!');
+    // Archiveボタンを押したときに、親要素の
+    // onClick属性も実行されてしまうのを止める
+    e.stopPropagation();
 
-    let promise = (new ILApi()).archiveItem(item);
-    promise.then((result) => {
-      let newItems = [];
-      this.state.items.map((value,index) => {
-        if (value.id != item.id) {
-          newItems.push(value);
-        }
-      })
-      this.setState({
-        items: newItems
-      })
-    })
+    let promise = (new ILApi()).archiveItem(item.id);
+    promise.then(
+      (result) => {
+        let newItems = [];
+        this.state.items.map((value,index) => {
+          if (value.id !== item.id) {
+            newItems.push(value);
+          }
+          return true;
+        })
+        this.setState({ items: newItems })
+      },
+      this.failureCallBack
+    )
   }
 
   renderItem = (item) => {
     if (item.id === separatorIndex ) {
       return (
-        <ListItem key={item.id} id={separatorIdAttr} className={separatorClass} title={item.title} />
+        <ListItem
+          key={item.id}
+          id={separatorIdAttr}
+          className={separatorClass}
+          title={item.title}
+        />
       );
     } else {
       const itemIdAttr = `${itemClass}${item.id}`
       return (
-        <ListItem key={item.id} id={itemIdAttr} className={itemClass} title={item.title} swipeout>
+        <ListItem
+          key={item.id}
+          id={itemIdAttr}
+          className={itemClass}
+          title={item.title}
+          swipeout
+        >
           <SwipeoutActions left>
             <SwipeoutButton 
               color="green"
@@ -226,14 +275,14 @@ export default class ILList extends Component {
   }
 
   render() {
-    console.log("render!");
+    console.log('run render!');
     return(
       <Page>
         <Navbar>
+          <NavTitle>Ivy Lee List</NavTitle>
           <NavRight>
             <Link iconF7="check_round" href="/ILArchive"></Link>
           </NavRight>
-          <NavTitle>Ivy Lee List</NavTitle>
         </Navbar>
 
         <List>
@@ -251,9 +300,9 @@ export default class ILList extends Component {
           onSortableSort={this.handleMoveItem}
         >
           {
-            this.state.items.map((item, index)=>{
-              return this.renderItem(item);
-            })
+            this.state.items.map(
+              (item, index)=>{ return this.renderItem(item) }
+            )
           }
         </List>
       </Page>
