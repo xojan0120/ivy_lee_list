@@ -7,23 +7,25 @@ import React, { Component } from 'react';
 // Import(Framework7)
 // ----------------------------------------------------------------------------------------
 import {
-    Link,
-    List,
-    ListItem,
-    NavLeft,
-    NavRight,
-    NavTitle,
-    Navbar,
-    Page,
-    SwipeoutActions,
-    SwipeoutButton,
+  Link,
+  List,
+  ListItem,
+  NavLeft,
+  NavRight,
+  NavTitle,
+  Navbar,
+  Page,
+  Preloader,
+  SwipeoutActions,
+  SwipeoutButton,
 } from 'framework7-react';
 import $$ from 'dom7';
 
 // ----------------------------------------------------------------------------------------
 // Import(Self made)
 // ----------------------------------------------------------------------------------------
-import ILApi from './ILApi'
+import { failureCallBack } from './Common'
+import ILApi               from './ILApi'
 
 // ----------------------------------------------------------------------------------------
 // CSS ClassName
@@ -50,6 +52,7 @@ export default class ILArchiveList extends Component {
 
     this.state = {
       items: [],
+      isLoading: false
     }
   }
 
@@ -62,29 +65,29 @@ export default class ILArchiveList extends Component {
     console.log('run componentWillUnmount!');
   }
 
-  failureCallBack = (e) => {
-    alert(e);
-  }
-
   fetchAllArchivedItem = () => {
     console.log('run fetchAllArchivedItem!');
 
-    let promise = (new ILApi()).fetchAllArchivedItem();
-    promise.then(
-      (result) => {
+    this.setState({ isLoading: true });
+    (new ILApi()).fetchAllArchivedItem()
+      .then((result) => {
         const items = result.data.data;
         this.setState({ items: items })
-      },
-      this.failureCallBack
-    )
+      })
+      .catch((error) => {
+        failureCallBack(error)
+      })
+      .finally(() => {
+        this.setState({ isLoading: false })
+      });
   }
 
   handleRestoreItem = (item, e) => {
     console.log('run handleRestoreItem!');
 
-    let promise = (new ILApi()).restoreItem(item.id);
-    promise.then(
-      (result) => {
+    this.setState({ isLoading: true });
+    (new ILApi()).restoreItem(item.id)
+      .then((result) => {
         let newItems = [];
         this.state.items.map((value,index) => {
           if (value.id !== item.id) {
@@ -93,17 +96,21 @@ export default class ILArchiveList extends Component {
           return true;
         })
         this.setState({ items: newItems })
-      },
-      this.failureCallBack
-    )
+      })
+      .catch((error) => {
+        failureCallBack(error)
+      })
+      .finally(() => {
+        this.setState({ isLoading: false })
+      });
   }
 
   handleDeleteItem = (item, e) => {
     console.log('run handleDeleteItem!');
 
-    let promise = (new ILApi()).deleteItem(item.id);
-    promise.then(
-      (result) => {
+    this.setState({ isLoading: true });
+    (new ILApi()).deleteItem(item.id)
+      .then((result) => {
         let newItems = [];
         this.state.items.map((value,index) => {
           if (value.id !== item.id) {
@@ -112,9 +119,13 @@ export default class ILArchiveList extends Component {
           return true;
         })
         this.setState({ items: newItems })
-      },
-      this.failureCallBack
-    )
+      })
+      .catch((error) => {
+        failureCallBack(error)
+      })
+      .finally(() => {
+        this.setState({ isLoading: false })
+      });
   }
 
   handleDeleteAllArchivedItem = (e) => {
@@ -123,13 +134,17 @@ export default class ILArchiveList extends Component {
     if ($$(itemsSelector).length > 0) {
       const answer = window.confirm('Delete all?');
       if (answer) {
-        let promise = (new ILApi()).deleteAllArchivedItem();
-        promise.then(
-          (result) => {
+        this.setState({ isLoading: true });
+        (new ILApi()).deleteAllArchivedItem()
+          .then((result) => {
             this.setState({ items: [] })
-          },
-          this.failureCallBack
-        )
+          })
+          .catch((error) => {
+            failureCallBack(error)
+          })
+          .finally(() => {
+            this.setState({ isLoading: false })
+          });
       }
     }
   }
@@ -165,7 +180,13 @@ export default class ILArchiveList extends Component {
           <NavLeft>
             <Link iconF7="list" href="/"></Link>
           </NavLeft>
-          <NavTitle>Archive</NavTitle>
+          <NavTitle>
+            Archive
+            <Preloader
+              size={21}
+              style={{visibility: this.state.isLoading ? "visible" : "hidden"}}>
+            </Preloader>
+          </NavTitle>
           <NavRight>
             <Link iconF7="trash" onClick={this.handleDeleteAllArchivedItem}></Link>
           </NavRight>

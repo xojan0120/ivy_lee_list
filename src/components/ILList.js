@@ -7,23 +7,25 @@ import React, { Component } from 'react';
 // Import(Framework7)
 // ----------------------------------------------------------------------------------------
 import {
-    Link,
-    List,
-    ListInput,
-    ListItem,
-    NavRight,
-    NavTitle,
-    Navbar,
-    Page,
-    SwipeoutActions,
-    SwipeoutButton,
+  Link,
+  List,
+  ListInput,
+  ListItem,
+  NavRight,
+  NavTitle,
+  Navbar,
+  Page,
+  Preloader,
+  SwipeoutActions,
+  SwipeoutButton,
 } from 'framework7-react';
 import $$ from 'dom7';
 
 // ----------------------------------------------------------------------------------------
 // Import(Self made)
 // ----------------------------------------------------------------------------------------
-import ILApi from './ILApi'
+import { failureCallBack } from './Common'
+import ILApi               from './ILApi'
 
 // ----------------------------------------------------------------------------------------
 // CSS ClassName
@@ -58,6 +60,7 @@ export default class ILList extends Component {
 
     this.state = {
       items: [],
+      isLoading: false
     }
   }
 
@@ -73,7 +76,6 @@ export default class ILList extends Component {
   componentDidUpdate = () => {
     console.log('run componentDidUpdate!');
 
-    // itemSelectorはseparatorを含まない
     $$(itemSelector).on('click', (e) => {
       this.handleClickItem(e);
     })
@@ -95,10 +97,6 @@ export default class ILList extends Component {
       return true;
     })
     return true;
-  }
-
-  failureCallBack = (e) => {
-    alert(e);
   }
 
   handleInputItem = (e) => {
@@ -129,6 +127,7 @@ export default class ILList extends Component {
 
   handleClickItem = (e) => {
     console.log('run handleClickItem!');
+
     const li = $$(e.currentTarget)[0]; // liのhtml要素
     const target = $$(li) // liのdom7オブジェクト
 
@@ -146,11 +145,18 @@ export default class ILList extends Component {
       const to   = this.getCurrentListIndex(separatorIdAttr);
 
       const itemId = this.getItemId(from);
-      let promise = (new ILApi()).moveItem(itemId, from, to);
-      promise.then(
-        (result) => { this.recombinantItems(from, to) },
-        this.failureCallBack
-      )
+
+      this.setState({ isLoading: true });
+      (new ILApi()).moveItem(itemId, from, to)
+        .then((result) => {
+          this.recombinantItems(from, to)
+        })
+        .catch((error) => {
+          failureCallBack(error)
+        })
+        .finally(() => {
+          this.setState({ isLoading: false })
+        });
     }
   }
 
@@ -185,39 +191,56 @@ export default class ILList extends Component {
     const to   = indexes.to;
 
     const itemId = this.getItemId(to);
-    let promise = (new ILApi()).moveItem(itemId, from, to);
-    promise.then(
-      (result) => { this.recombinantItems(from, to) },
-      this.failureCallBack
-    )
+
+    this.setState({ isLoading: true });
+    (new ILApi()).moveItem(itemId, from, to)
+      .then((result) => {
+        this.recombinantItems(from, to)
+      })
+      .catch((error) => {
+        failureCallBack(error)
+      })
+      .finally(() => {
+        this.setState({ isLoading: false })
+      });
   }
 
   fetchAllItem = () => {
     console.log('run fetchAllItem!');
 
-    let promise = (new ILApi()).fetchAllItem();
-    promise.then(
-      (result) => {
+    this.setState({ isLoading: true });
+    (new ILApi()).fetchAllItem()
+      .then((result) => {
         const items = result.data.data;
         this.setState({ items: items })
-      },
-      this.failureCallBack
-    )
+      })
+      .catch((error) => {
+        failureCallBack(error)
+      })
+      .finally(() => {
+        this.setState({ isLoading: true })
+      });
   }
 
   handleAddItem = (title) => {
     console.log('run handleAddItem!');
 
-    let promise = (new ILApi()).addItem(title);
-    promise.then(
-      (result) => {
+    this.setState({ isLoading: true });
+    (new ILApi()).addItem(title)
+      .then((result) => {
         const newItem = result.data.data;
         let newItems = this.state.items.slice();
         newItems.unshift(newItem);
         this.setState({ items: newItems })
-      },
-      this.failureCallBack)
+      })
+      .catch((error) => {
+        failureCallBack(error)
+      })
+      .finally(() => {
+        this.setState({ isLoading: false })
+      });
   }
+  // TODO: https://projects.lukehaas.me/css-loaders/ の利用は？
 
   handleArchiveItem = (item, e) => {
     console.log('run handleArchiveItem!');
@@ -225,9 +248,9 @@ export default class ILList extends Component {
     // onClick属性も実行されてしまうのを止める
     e.stopPropagation();
 
-    let promise = (new ILApi()).archiveItem(item.id);
-    promise.then(
-      (result) => {
+    this.setState({ isLoading: true });
+    (new ILApi()).archiveItem(item.id)
+      .then((result) => {
         let newItems = [];
         this.state.items.map((value,index) => {
           if (value.id !== item.id) {
@@ -236,9 +259,13 @@ export default class ILList extends Component {
           return true;
         })
         this.setState({ items: newItems })
-      },
-      this.failureCallBack
-    )
+      })
+      .catch((error) => {
+        failureCallBack(error)
+      })
+      .finally(() => {
+        this.setState({ isLoading: false })
+      });
   }
 
   renderItem = (item) => {
@@ -279,11 +306,18 @@ export default class ILList extends Component {
     return(
       <Page>
         <Navbar>
-          <NavTitle>Ivy Lee List</NavTitle>
+          <NavTitle>
+            Ivy Lee List
+            <Preloader
+              size={21}
+              style={{visibility: this.state.isLoading ? "visible" : "hidden"}}>
+            </Preloader>
+          </NavTitle>
           <NavRight>
             <Link iconF7="check_round" href="/ILArchive"></Link>
           </NavRight>
         </Navbar>
+
 
         <List>
           <ListInput 
@@ -293,12 +327,12 @@ export default class ILList extends Component {
             clearButton />
         </List>
 
+
         <List 
           className={itemsClass} 
           sortable 
           sortableEnabled 
-          onSortableSort={this.handleMoveItem}
-        >
+          onSortableSort={this.handleMoveItem} >
           {
             this.state.items.map(
               (item, index)=>{ return this.renderItem(item) }
