@@ -16,7 +16,7 @@ export default class ILApi {
   }
 
   addItem = (title) => {
-    const data = { title: title }
+    const data = { title: title };
     return axios.post(`${this.server}/items`, data);
   }
 
@@ -25,8 +25,13 @@ export default class ILApi {
   }
 
   moveItem = (itemId, from, to) => {
-    const data = { from: from, to: to }
-    return axios.patch(`${this.server}/items/${itemId}/update_order`, data);
+    const data = { from: from, to: to };
+    return axios.patch(`${this.server}/items/${itemId}/order`, data);
+  }
+
+  changeItem = (item) => {
+    const data = { title: item.title };
+    return axios.patch(`${this.server}/items/${item.id}/title`, data);
   }
 
   fetchAllArchivedItem = () => {
