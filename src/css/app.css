@@ -1,4 +1,6 @@
-/* Your app styles here */
+@import url('https://fonts.googleapis.com/css?family=M+PLUS+1p');
+body { font-family: "M PLUS 1p" };
+
 .preloader {
   margin-left: 10px;
 }

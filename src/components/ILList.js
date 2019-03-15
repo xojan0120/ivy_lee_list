@@ -73,13 +73,34 @@ export default class ILList extends Component {
     })
   }
 
-  componentDidUpdate = () => {
+  shouldComponentUpdate = (nextProps, nextState) => {
+    console.log('run shouldComponentUpdate!');
+    return true;
+  }
+
+  componentDidUpdate = (prevProps, prevState) => {
     console.log('run componentDidUpdate!');
 
-    $$(itemSelector).on('click', (e) => {
-      this.handleClickItem(e);
+    // itemの要素にonClickイベント付与する。
+    // [補足1] componentDidMount内で行わない理由
+    //  componentDidMount内のfetchAllItemでのitem取得処理は、非同期処理のため、
+    //  非同期処理完了→state.items更新→render→componentDidUpdateのタイミングで
+    //  イベント付与しないといけないため。
+    // [補足2] イベント登録を一旦offする理由
+    //  itemの並び順を変えたりしたときにもcomponentDidUpdateが走るので、
+    //  イベントの多重登録を防ぐため。別解としては、イベントの多重登録がされない
+    //  addEventListenerを使う方法もある。
+    //  参考：https://qiita.com/nekoneko-wanwan/items/3d3da95f1127f743397d
+    $$(itemsSelector).map((index,ele) => {
+      $$(ele).off('click');
+      $$(ele).on('click', (e) => {
+        this.handleClickItem(e);
+      })
     })
 
+    // separatorより、前のitemはstockクラス除去、後のitemはstockクラス付与
+    // stockクラス有無により、handleClickItem内でクリック処理を実行するか
+    // 否かを判断している
     this.changeStockClass();
 
     this.show('show items state', this.state.items);
@@ -88,7 +109,7 @@ export default class ILList extends Component {
   componentWillUnmount = () => {
     console.log('run componentWillUnmount!');
   }
-
+  
   // debug用
   show = (title,state) => {
     console.log(title);
@@ -116,6 +137,8 @@ export default class ILList extends Component {
   // this.state.itemsの順番組み換え
   // 添字fromの要素を、添字toの後ろへ移動する
   recombinantItems = (from, to) => {
+    console.log('run recombinantItems!');
+
     // Array.sliceでディープコピーできる
     let newItems = this.state.items.slice();
     const val = newItems.splice(from, 1);
@@ -146,7 +169,7 @@ export default class ILList extends Component {
 
       const itemId = this.getItemId(from);
 
-      this.setState({ isLoading: true });
+      //this.setState({ isLoading: true });
       (new ILApi()).moveItem(itemId, from, to)
         .then((result) => {
           this.recombinantItems(from, to)
@@ -155,13 +178,11 @@ export default class ILList extends Component {
           failureCallBack(error)
         })
         .finally(() => {
-          this.setState({ isLoading: false })
+          //this.setState({ isLoading: false })
         });
     }
   }
 
-  // separatorより前のitemはstockクラス除去
-  // separatorより後のitemはstockクラス付与
   changeStockClass = () => {
     console.log('run changeStockClass!');
 
@@ -208,7 +229,7 @@ export default class ILList extends Component {
   fetchAllItem = () => {
     console.log('run fetchAllItem!');
 
-    this.setState({ isLoading: true });
+    //this.setState({ isLoading: true });
     (new ILApi()).fetchAllItem()
       .then((result) => {
         const items = result.data.data;
@@ -218,7 +239,7 @@ export default class ILList extends Component {
         failureCallBack(error)
       })
       .finally(() => {
-        this.setState({ isLoading: true })
+        //this.setState({ isLoading: false })
       });
   }
 
@@ -240,7 +261,6 @@ export default class ILList extends Component {
         this.setState({ isLoading: false })
       });
   }
-  // TODO: https://projects.lukehaas.me/css-loaders/ の利用は？
 
   handleArchiveItem = (item, e) => {
     console.log('run handleArchiveItem!');
@@ -308,11 +328,12 @@ export default class ILList extends Component {
         <Navbar>
           <NavTitle>
             Ivy Lee List
-            <Preloader
-              size={21}
-              style={{visibility: this.state.isLoading ? "visible" : "hidden"}}>
-            </Preloader>
           </NavTitle>
+          <Preloader
+            size={21}
+            style={{visibility: this.state.isLoading ? "visible" : "hidden"}}
+          >
+          </Preloader>
           <NavRight>
             <Link iconF7="check_round" href="/ILArchive"></Link>
           </NavRight>

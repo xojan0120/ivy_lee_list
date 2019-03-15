@@ -182,11 +182,12 @@ export default class ILArchiveList extends Component {
           </NavLeft>
           <NavTitle>
             Archive
-            <Preloader
-              size={21}
-              style={{visibility: this.state.isLoading ? "visible" : "hidden"}}>
-            </Preloader>
           </NavTitle>
+          <Preloader
+            size={21}
+            style={{visibility: this.state.isLoading ? "visible" : "hidden"}}
+          >
+          </Preloader>
           <NavRight>
             <Link iconF7="trash" onClick={this.handleDeleteAllArchivedItem}></Link>
           </NavRight>
