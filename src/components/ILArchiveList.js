@@ -28,7 +28,7 @@ import {
   cmnFailureCallBack,
   cmnPreloaderSize
 } from './Common';
-import ILApi               from './ILApi';
+import ILApi from './ILApi';
 
 // ----------------------------------------------------------------------------------------
 // * CSS ClassName
