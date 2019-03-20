@@ -27,7 +27,8 @@ import $$ from 'dom7';
 // ----------------------------------------------------------------------------------------
 import {
   cmnFailureCallBack,
-  cmnPreloaderSize
+  cmnPreloaderSize,
+  cmnSeparatorId,
 } from './Common';
 import ILApi from './ILApi';
 
@@ -52,8 +53,7 @@ const separatorSelector = `.${separatorClass}`;
 // ----------------------------------------------------------------------------------------
 // * Other Constants
 // ----------------------------------------------------------------------------------------
-const separatorIndex  = 1; // DB上のidと同値にする
-const separatorIdAttr = `${itemClass}${separatorIndex}`;
+const separatorIdAttr = `${itemClass}${cmnSeparatorId}`;
 
 // ----------------------------------------------------------------------------------------
 // * Main Class
@@ -284,7 +284,7 @@ export default class ILList extends Component {
 
   // 区切り用アイテム判定
   isSeparator = (item) => {
-    if (item.id === separatorIndex) {
+    if (item.id === cmnSeparatorId) {
       return true;
     } else {
       return false;
