@@ -1,29 +1,71 @@
-# Framework7 v3 React App Template
+Ivy Lee List
+===
 
-To get started, clone this repo as whatever you want to name your app:
-...
+## Overview
+これは、簡素なスマホ向けToDoアプリです。勉強用に作成しました。  
 
+## Description
+フロントエンドにReact、バックエンドにRails(API)を使用しています。  
+React部分には、[Framework7](https://framework7.io/react/)を使用しています。  
+バックエンド部分は[こちら](https://github.com/xojan0120/ivy_lee_list_api)  
+
+認証機能はありません。
+
+## Install
 ```
-git clone https://github.com/framework7io/framework7-react-app-template/ my-app
-```
-
-Running the app:
-
-```
+git clone https://github.com/xojan0120/ivy_lee_list
+cd ivy_lee_list
 npm install
 npm start
 ```
 
-To build your app for deployment, run:
+バックエンドサーバのエンドポイントURIを以下の2つのファイルが必要です。
+```
+.env.development.local # ローカル開発環境用
+.env.production # 本番環境用(npm build時に読み込まれる)
+```
 
+ファイルの中身はいずれも下記の通りです。
+```
+REACT_APP_API_ENDPOINT_URI = http://<HOST>:<PORT>/api/v1/ill
+```
+
+## build
 ```
 npm run build
 ```
 
-The build folder will then contain all of your app's files, optimized and ready for deployment.
+### アプリの使い方
+* タスクを入力するとリストの一番上に追加されます。
+* 入力したタスク部分をタップすると編集することができます。
+* 左端のタグアイコンをタップすると、区切り線のすぐ下に移動します。
+* 右端の移動アイコンをドラッグすると、並び替えができます。
+* タスクを右にスワイプすると、タスクをアーカイブすることができます。
+* アーカイブされたタスクは、右上のチェックマークアイコンをタップすると表示できます。
+* アーカイブ画面のタスクを右にスワイプすると、タスクをレストア、または、削除できます。
+* アーカイブ画面の右上のゴミ箱アイコンをタップすると、アーカイブしたタスクを全削除できます。
 
-This template was created with [Create React App](https://github.com/facebookincubator/create-react-app). It is suggested that you read more about Create React App to understand the full capabilities of the toolset.
+### 私の使い方
+このToDoアプリは私が日々行っているアイビーリーメソッドによるToDo管理のために作成しました。  
 
-### Issues
+アイビーリーメソッドとは
+> 1. 紙に「明日やるべきこと」を6つ、メモする
+> 2. その6項目を重要だと思われる順に1、2、3、4、5、6と番号を振る
+> 3. 翌日、このメモの順番に従って仕事を進める
+> 4. もし全部できなかったら、悔やむことなく忘れる
+> 5. その後、明日のための6つの項目を新しくメモする
+> 6. 1～5を丁寧に繰り返す
+（引用元：メンタリスト DaiGo（2016）,『自分を操る超集中力』,かんき出版.）
 
-Please log any issues to the main [Framework7 repo](https://github.com/framework7io/framework7/issues).
+1日の始めに、区切り線より上に優先順に6つのタスクを入力します。
+上から順にタスクを実行し、そのタスクが完全に完了した場合はアーカイブします。  
+そのタスクを翌日も繰り返したいときは、区切り線より下に移動しておきます。  
+1日の途中で新たに思いついたタスクも、入力して下に移動しておきます。  
+翌日の朝、下に移動したタスクから、その日にやるタスクを6つ選び、上に並べます。  
+あとは繰り返し。
+
+## Licence
+[MIT](https://opensource.org/licenses/MIT)
+
+## Author
+[Kido Ryosuke](https://github.com/xojan0120)
