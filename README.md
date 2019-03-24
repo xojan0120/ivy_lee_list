@@ -4,6 +4,8 @@ Ivy Lee List
 ## Overview
 これは、簡素なスマホ向けToDoアプリです。勉強用に作成しました。  
 
+![image](https://user-images.githubusercontent.com/33190342/54879074-32648000-4e78-11e9-8311-768b8be2e09b.png)
+
 ## Description
 フロントエンドにReact、バックエンドにRails(API)を使用しています。  
 React部分には、[Framework7](https://framework7.io/react/)を使用しています。  
