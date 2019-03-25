@@ -13,6 +13,8 @@ React部分には、[Framework7](https://framework7.io/react/)を使用してい
 
 認証機能はありません。
 
+[Demo Site](http://ec2-52-69-226-149.ap-northeast-1.compute.amazonaws.com/)
+
 ## Install
 ```
 git clone https://github.com/xojan0120/ivy_lee_list
