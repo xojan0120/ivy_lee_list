@@ -29,6 +29,7 @@ import {
   cmnFailureCallBack,
   cmnPreloaderSize,
   cmnSeparatorId,
+  cmnSetGtag,
 } from './Common';
 import ILApi from './ILApi';
 
@@ -79,6 +80,8 @@ export default class ILList extends Component {
     $$(itemInputSelector).on('keydown', (e) => {
       this.handleAddItemForm(e);
     });
+
+    cmnSetGtag();
   }
 
   shouldComponentUpdate = (nextProps, nextState) => {
