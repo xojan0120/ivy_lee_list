@@ -68,6 +68,7 @@ export default class ILList extends Component {
       items: [],
       isLoading: false,
     };
+
   }
 
   // --------------------------------------------------------------------------------------
