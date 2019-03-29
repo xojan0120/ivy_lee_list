@@ -14,7 +14,6 @@ export const cmnFailureCallBack = (error) => {
 
 // componentDidMount内で使用する
 export const cmnSetGtag = () => {
-  console.log(process.env.REACT_APP_GOOGLE_TRACKING_ID);
   if (process.env.REACT_APP_GOOGLE_TRACKING_ID) {
     let script1 = document.createElement("script");
     script1.async = true;
